@@ -30,6 +30,9 @@ import org.apache.rocketmq.common.constant.LoggerName;
 import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 
+/**
+ *  一个commit log每个大小1G，所以会有多个文件，此类就是用于逻辑上抽象出来的一个完整的commit log文件
+ */
 public class MappedFileQueue {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
     private static final InternalLogger LOG_ERROR = InternalLoggerFactory.getLogger(LoggerName.STORE_ERROR_LOGGER_NAME);
@@ -312,7 +315,7 @@ public class MappedFileQueue {
         }
         return -1;
     }
-
+    /** 从最近的consume queue中获取去最大偏移字节数 。使用filename表示的偏移量+当前文件的read position*/
     public long getMaxOffset() {
         MappedFile mappedFile = getLastMappedFile();
         if (mappedFile != null) {

@@ -42,6 +42,10 @@ import org.apache.rocketmq.store.config.FlushDiskType;
 import org.apache.rocketmq.store.util.LibC;
 import sun.nio.ch.DirectBuffer;
 
+/**
+ * 每个MappedFile对象代表磁盘上的一个文件，持有此文件的全路径， 已提交位置 已经写的位置 flush的位置，文件大小。
+ * 此文件开始的offset。持有此文件表示的FileChannel，通过此channel的map方法获取MappedByteBuffer，使用mmap来读写文件。
+ */
 public class MappedFile extends ReferenceResource {
     public static final int OS_PAGE_SIZE = 1024 * 4;
     protected static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
@@ -60,7 +64,7 @@ public class MappedFile extends ReferenceResource {
     protected ByteBuffer writeBuffer = null;
     protected TransientStorePool transientStorePool = null;
     private String fileName;
-    private long fileFromOffset;
+    private long fileFromOffset; // 从filename上计算出来的偏移量
     private File file;
     private MappedByteBuffer mappedByteBuffer;
     private volatile long storeTimestamp = 0;
@@ -152,7 +156,7 @@ public class MappedFile extends ReferenceResource {
     private void init(final String fileName, final int fileSize) throws IOException {
         this.fileName = fileName;
         this.fileSize = fileSize;
-        this.file = new File(fileName);
+        this.file = new File(fileName); // 文件名就是第一个offset
         this.fileFromOffset = Long.parseLong(this.file.getName());
         boolean ok = false;
 
@@ -340,7 +344,7 @@ public class MappedFile extends ReferenceResource {
             }
         }
     }
-
+    /** 是否可以刷盘。 当前文件满了，不能刷。如果按page页的方式刷，需要看下未刷盘的页数够不够需要刷页的页数。不使用刷页的方式，直接看写入的位置和已刷的位置是否中间还有未刷盘的数据*/
     private boolean isAbleToFlush(final int flushLeastPages) {
         int flush = this.flushedPosition.get();
         int write = getReadPosition();

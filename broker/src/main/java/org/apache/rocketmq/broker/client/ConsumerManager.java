@@ -33,6 +33,10 @@ import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
 
+/**
+ * 消费者管理器。其实应该叫ConsumerGroupManager比较合适
+ * 记录当前broker所有订阅的消费组信息，每个消费组订阅了哪些topic，订阅的信息
+ */
 public class ConsumerManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private static final long CHANNEL_EXPIRED_TIMEOUT = 1000 * 120;

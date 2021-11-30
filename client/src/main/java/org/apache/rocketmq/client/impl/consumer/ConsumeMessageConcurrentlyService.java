@@ -337,6 +337,10 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
         }, 5000, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 实际消息消费任务。在这里会调用注册进来的消息监听器。
+     * 消费时，单次要处理的消息数量 会根据DefaultMQPushConsumerImpl中单批量批量大小来消费
+     */
     class ConsumeRequest implements Runnable {
         private final List<MessageExt> msgs;
         private final ProcessQueue processQueue;

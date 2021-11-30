@@ -18,6 +18,10 @@ package org.apache.rocketmq.store;
 
 /**
  * Used when trying to put message
+ * 写数据时的锁 抽象接口，因为给了两个锁类型，所以抽象下。
+ * 竞争大使用可重入锁
+ *
+ * 竞争小使用自旋锁
  */
 public interface PutMessageLock {
     void lock();

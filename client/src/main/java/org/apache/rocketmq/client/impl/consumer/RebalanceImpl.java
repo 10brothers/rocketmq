@@ -41,11 +41,22 @@ import org.apache.rocketmq.common.protocol.heartbeat.ConsumeType;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
+/**
+ * rebalance 的抽象类
+ * 每个consumer都有一个属于自己的重平衡服务。
+ * 每隔一段时间检查下当前消费组是否有新的消费者上线或者下线，然后根据message queue的分配策略重新分配当前实例所能消费的queue有哪些
+ */
 public abstract class RebalanceImpl {
     protected static final InternalLogger log = ClientLogger.getLog();
     protected final ConcurrentMap<MessageQueue, ProcessQueue> processQueueTable = new ConcurrentHashMap<MessageQueue, ProcessQueue>(64);
+    /**
+     * topic和它对应的message queue的映射关系
+     */
     protected final ConcurrentMap<String/* topic */, Set<MessageQueue>> topicSubscribeInfoTable =
         new ConcurrentHashMap<String, Set<MessageQueue>>();
+    /**
+     * topic和其对应的订阅信息，比如表达式等等
+     */
     protected final ConcurrentMap<String /* topic */, SubscriptionData> subscriptionInner =
         new ConcurrentHashMap<String, SubscriptionData>();
     protected String consumerGroup;

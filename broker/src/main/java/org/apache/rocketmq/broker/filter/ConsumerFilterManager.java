@@ -39,6 +39,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Consumer filter data manager.Just manage the consumers use expression filter.
+ *
+ * 一个topic下不同的消费组，会使用不同的过滤方式来拉去自己想要的信息
+ *
  */
 public class ConsumerFilterManager extends ConfigManager {
 

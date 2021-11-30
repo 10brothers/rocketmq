@@ -84,6 +84,10 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.remoting.netty.NettyClientConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
+/**
+ * 特别重的一个对象 一个MQClient实例创建一个，包含了producer和consumer，拉取消息 重平衡等等
+ * 所有的网络通信也在这里
+ */
 public class MQClientInstance {
     private final static long LOCK_TIMEOUT_MILLIS = 3000;
     private final InternalLogger log = ClientLogger.getLog();
@@ -91,15 +95,27 @@ public class MQClientInstance {
     private final int instanceIndex;
     private final String clientId;
     private final long bootTimestamp = System.currentTimeMillis();
+    /**
+     * 生产组和DefaultMQProducerImpl实例对象对应关系
+     */
     private final ConcurrentMap<String/* group */, MQProducerInner> producerTable = new ConcurrentHashMap<String, MQProducerInner>();
+    /**
+     * 消费组和DefaultMQPushConsumerImpl实例对象对应关系
+     */
     private final ConcurrentMap<String/* group */, MQConsumerInner> consumerTable = new ConcurrentHashMap<String, MQConsumerInner>();
     private final ConcurrentMap<String/* group */, MQAdminExtInner> adminExtTable = new ConcurrentHashMap<String, MQAdminExtInner>();
     private final NettyClientConfig nettyClientConfig;
     private final MQClientAPIImpl mQClientAPIImpl;
     private final MQAdminImpl mQAdminImpl;
+    /**
+     * topic及其对应的路由信息，路由数据中包含多少个queue 多少个broker，broker的信息，queue和broker的关系
+     */
     private final ConcurrentMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<String, TopicRouteData>();
     private final Lock lockNamesrv = new ReentrantLock();
     private final Lock lockHeartbeat = new ReentrantLock();
+    /**
+     * broker name 以及这个同一个broker name下所有及其的broker id 地址信息，主从模式 共用一个broker name ，不同的broker id
+     */
     private final ConcurrentMap<String/* Broker Name */, HashMap<Long/* brokerId */, String/* address */>> brokerAddrTable =
         new ConcurrentHashMap<String, HashMap<Long, String>>();
     private final ConcurrentMap<String/* Broker Name */, HashMap<String/* address */, Integer>> brokerVersionTable =
@@ -140,9 +156,9 @@ public class MQClientInstance {
         this.clientId = clientId;
 
         this.mQAdminImpl = new MQAdminImpl(this);
-
+        // 拉取消息的服务 这个是拉消息的核心，负责拉取消息
         this.pullMessageService = new PullMessageService(this);
-
+        // 重平衡服务，在有新的消费实例上线下线时再分配实例消费的message queue
         this.rebalanceService = new RebalanceService(this);
 
         this.defaultMQProducer = new DefaultMQProducer(MixAll.CLIENT_INNER_PRODUCER_GROUP);
@@ -231,15 +247,15 @@ public class MQClientInstance {
                     if (null == this.clientConfig.getNamesrvAddr()) {
                         this.mQClientAPIImpl.fetchNameServerAddr();
                     }
-                    // Start request-response channel
+                    // Start request-response channel 配置一个可用的Bootstrap，然后在createChannel时才会做connect操作
                     this.mQClientAPIImpl.start();
                     // Start various schedule tasks
                     this.startScheduledTask();
-                    // Start pull service
+                    // Start pull service  开启拉取消息的线程
                     this.pullMessageService.start();
-                    // Start rebalance service
+                    // Start rebalance service 启动重平衡服务 每隔20s检查一次
                     this.rebalanceService.start();
-                    // Start push service
+                    // Start push service 启动 producer
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);
                     log.info("the client factory [{}] start OK", this.clientId);
                     this.serviceState = ServiceState.RUNNING;

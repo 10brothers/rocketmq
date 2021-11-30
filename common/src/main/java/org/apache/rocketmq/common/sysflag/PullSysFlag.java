@@ -16,6 +16,9 @@
  */
 package org.apache.rocketmq.common.sysflag;
 
+/**
+ * 消息拉取时的一些参数设置。是否提交偏移量（需要broker是master并且允许push模式且开启了偏移量存储） 是否push模式 是否使用消费端自定义订阅信息 是否消费端自定义类过滤
+ */
 public class PullSysFlag {
     private final static int FLAG_COMMIT_OFFSET = 0x1;
     private final static int FLAG_SUSPEND = 0x1 << 1;

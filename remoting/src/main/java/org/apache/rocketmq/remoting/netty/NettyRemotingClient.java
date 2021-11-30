@@ -561,7 +561,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         if (null == executor) {
             executorThis = this.publicExecutor;
         }
-
+        // 不同的请求类型，使用不同的请求处理器以及给定的线程池
         Pair<NettyRequestProcessor, ExecutorService> pair = new Pair<NettyRequestProcessor, ExecutorService>(processor, executorThis);
         this.processorTable.put(requestCode, pair);
     }

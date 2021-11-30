@@ -21,6 +21,10 @@ import org.apache.rocketmq.store.MessageArrivingListener;
 
 import java.util.Map;
 
+/**
+ * 通知消息到达监听器。在有新消息到达时，会立即通知拉取消息的消费长链接请求，然后主动将消息推送给消费者，
+ * 这样可以做到更快的消息推送，延迟更低
+ */
 public class NotifyMessageArrivingListener implements MessageArrivingListener {
     private final PullRequestHoldService pullRequestHoldService;
 

@@ -33,6 +33,12 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
+/**
+ * 消费偏移量管理器
+ *
+ * 以topic+@+consumerGroup作为key，来记录此消费组对此topic的每个messageQueue的消费偏移量。
+ * 广播消费的话，应该只记录每个message queue上最大的偏移量？
+ */
 public class ConsumerOffsetManager extends ConfigManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private static final String TOPIC_GROUP_SEPARATOR = "@";

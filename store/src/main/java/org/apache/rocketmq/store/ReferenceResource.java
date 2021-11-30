@@ -17,7 +17,9 @@
 package org.apache.rocketmq.store;
 
 import java.util.concurrent.atomic.AtomicLong;
-
+/**
+ * 资源引用，这里可以用来表示MappedFile
+ */
 public abstract class ReferenceResource {
     protected final AtomicLong refCount = new AtomicLong(1);
     protected volatile boolean available = true;

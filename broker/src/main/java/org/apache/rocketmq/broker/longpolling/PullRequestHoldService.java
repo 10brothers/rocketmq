@@ -29,6 +29,11 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.store.ConsumeQueueExt;
 
+/**
+ * 同一个topic的message queue，会有多个不同的消费者实例在拉取消息，
+ * 使用topic+@+queueId作为key，然后连接上来的消费者实例客户端channel列表作为value。
+ * 消息到达时，挨个推送消息
+ */
 public class PullRequestHoldService extends ServiceThread {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private static final String TOPIC_QUEUEID_SEPARATOR = "@";

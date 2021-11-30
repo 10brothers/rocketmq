@@ -40,6 +40,12 @@ import org.apache.rocketmq.common.topic.TopicValidator;
 import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 
+/**
+ * topic管理器，此broker所有的topic都在这里管理。
+ * 并且一些rocketmq默认的一些各种各样的topic也在管理器创建时初始化
+ * 然后在broker注册到nameserver时，会将这些topic信息也注册到nameserver。
+ * topic --> TopicConfig
+ */
 public class TopicConfigManager extends ConfigManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private static final long LOCK_TIMEOUT_MILLIS = 3000;

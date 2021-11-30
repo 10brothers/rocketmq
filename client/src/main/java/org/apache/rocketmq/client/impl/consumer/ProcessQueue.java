@@ -37,6 +37,8 @@ import org.apache.rocketmq.common.protocol.body.ProcessQueueInfo;
 
 /**
  * Queue consumption snapshot
+ * 用来在消费端，记录每个消费组所消费队列的的消费快照。也就是每个message queue的消费进度。
+ * 同时还有对应的队列消费消息数量
  */
 public class ProcessQueue {
     public final static long REBALANCE_LOCK_MAX_LIVE_TIME =
@@ -45,16 +47,19 @@ public class ProcessQueue {
     private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("rocketmq.client.pull.pullMaxIdleTime", "120000"));
     private final InternalLogger log = ClientLogger.getLog();
     private final ReadWriteLock treeMapLock = new ReentrantReadWriteLock();
+    /**
+     * 消息偏移量与实际的消息对象映射关系
+     */
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
-    private final AtomicLong msgCount = new AtomicLong();
-    private final AtomicLong msgSize = new AtomicLong();
+    private final AtomicLong msgCount = new AtomicLong(); // 已处理消息数量
+    private final AtomicLong msgSize = new AtomicLong(); // 当前所对应的处理队列实际已处理消息总大小 非消息个数
     private final Lock consumeLock = new ReentrantLock();
     /**
      * A subset of msgTreeMap, will only be used when orderly consume
      */
     private final TreeMap<Long, MessageExt> consumingMsgOrderlyTreeMap = new TreeMap<Long, MessageExt>();
     private final AtomicLong tryUnlockTimes = new AtomicLong(0);
-    private volatile long queueOffsetMax = 0L;
+    private volatile long queueOffsetMax = 0L; // 记录当前msgQueue最大的消费偏移量
     private volatile boolean dropped = false;
     private volatile long lastPullTimestamp = System.currentTimeMillis();
     private volatile long lastConsumeTimestamp = System.currentTimeMillis();
@@ -72,6 +77,7 @@ public class ProcessQueue {
     }
 
     /**
+     * 将已经拉取到客户端的消费组中还未消费的消息，再写回到level为3的延迟消息队列中，延迟消费
      * @param pushConsumer
      */
     public void cleanExpiredMsg(DefaultMQPushConsumer pushConsumer) {
@@ -182,6 +188,11 @@ public class ProcessQueue {
         return 0;
     }
 
+    /**
+     * 从处理队列中移除拉取的消息。移除消息可能是因为已经消费了在ack，也可能因为rebalance
+     * @param msgs
+     * @return
+     */
     public long removeMessage(final List<MessageExt> msgs) {
         long result = -1;
         final long now = System.currentTimeMillis();

@@ -67,6 +67,9 @@ public abstract class ConfigManager {
 
     public abstract void decode(final String jsonString);
 
+    /**
+     * 将配置保存到文件中
+     */
     public synchronized void persist() {
         String jsonString = this.encode(true);
         if (jsonString != null) {

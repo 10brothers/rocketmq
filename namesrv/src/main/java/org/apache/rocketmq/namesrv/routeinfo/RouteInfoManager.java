@@ -765,7 +765,7 @@ public class RouteInfoManager {
     }
 }
 
-class BrokerLiveInfo {
+class BrokerLiveInfo { // broker会不断进行注册，注册时会更新一个新的BrokerLiveInfo对象
     private long lastUpdateTimestamp;
     private DataVersion dataVersion;
     private Channel channel;

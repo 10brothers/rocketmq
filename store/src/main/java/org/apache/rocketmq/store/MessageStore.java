@@ -28,6 +28,8 @@ import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
 /**
  * This class defines contracting interfaces to implement, allowing third-party vendor to use customized message store.
+ *
+ * 消费存储。目前rocketmq自己实现的是{@link DefaultMessageStore}。它直接决定如何处理存储消息
  */
 public interface MessageStore {
 
@@ -94,7 +96,7 @@ public interface MessageStore {
     /**
      * Query at most <code>maxMsgNums</code> messages belonging to <code>topic</code> at <code>queueId</code> starting
      * from given <code>offset</code>. Resulting messages will further be screened using provided message filter.
-     *
+     *  根据传入的偏移量以及要读取的消息数量，先从consume queue获取commit log上的offset然后读取出来真实的消息
      * @param group Consumer group that launches this query.
      * @param topic Topic to query.
      * @param queueId Queue ID to query.

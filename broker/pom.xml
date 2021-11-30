@@ -66,6 +66,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.openmessaging.storage</groupId>
+            <artifactId>dledger</artifactId>
+            <version>0.2.2</version>
+        </dependency>
     </dependencies>
 
     <build>

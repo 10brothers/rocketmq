@@ -40,8 +40,8 @@ public class ConsumeQueue {
 
     private final String storePath;
     private final int mappedFileSize;
-    private long maxPhysicOffset = -1;
-    private volatile long minLogicOffset = 0;
+    private long maxPhysicOffset = -1; // 对应到commit log中最大偏移量
+    private volatile long minLogicOffset = 0; // consume queue中能和commit log的最小offset对应起来的那个offset偏移量
     private ConsumeQueueExt consumeQueueExt = null;
 
     public ConsumeQueue(
@@ -371,7 +371,7 @@ public class ConsumeQueue {
             this.consumeQueueExt.truncateByMinAddress(minExtAddr);
         }
     }
-
+    /** 获取consume queue中最小偏移数 ，不是偏移的字节数 而是单元数 */
     public long getMinOffsetInQueue() {
         return this.minLogicOffset / CQ_STORE_UNIT_SIZE;
     }
@@ -557,7 +557,7 @@ public class ConsumeQueue {
     public long getMessageTotalInQueue() {
         return this.getMaxOffsetInQueue() - this.getMinOffsetInQueue();
     }
-
+    /** 整个consume queue的最大单元数 */
     public long getMaxOffsetInQueue() {
         return this.mappedFileQueue.getMaxOffset() / CQ_STORE_UNIT_SIZE;
     }

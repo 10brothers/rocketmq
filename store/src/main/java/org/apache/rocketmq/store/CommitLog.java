@@ -51,6 +51,7 @@ import org.apache.rocketmq.store.schedule.ScheduleMessageService;
 
 /**
  * Store all metadata downtime for recovery, data protection reliability
+ * commitlog文件存储的抽象。真正去管理commitlog的写入 读取 刷盘
  */
 public class CommitLog {
     // Message's MAGIC CODE daa320a7
@@ -89,15 +90,15 @@ public class CommitLog {
         }
 
         this.defaultMessageStore = defaultMessageStore;
-
+        // 刷盘策略，同步刷盘和异步刷盘 从pagecache写入到磁盘
         if (FlushDiskType.SYNC_FLUSH == defaultMessageStore.getMessageStoreConfig().getFlushDiskType()) {
             this.flushCommitLogService = new GroupCommitService();
         } else {
             this.flushCommitLogService = new FlushRealTimeService();
         }
-
+        // 刷盘用的
         this.commitLogService = new CommitRealTimeService();
-
+        // 向commit log写数据时的回调
         this.appendMessageCallback = new DefaultAppendMessageCallback(defaultMessageStore.getMessageStoreConfig().getMaxMessageSize());
         putMessageThreadLocal = new ThreadLocal<PutMessageThreadLocal>() {
             @Override
@@ -145,6 +146,10 @@ public class CommitLog {
         return this.mappedFileQueue.getFlushedWhere();
     }
 
+    /**
+     * 获取commit log 此时有效可读取数据的最大offset
+     * @return
+     */
     public long getMaxOffset() {
         return this.mappedFileQueue.getMaxOffset();
     }
@@ -642,7 +647,7 @@ public class CommitLog {
 
         long elapsedTimeInLock = 0;
         MappedFile unlockMappedFile = null;
-
+        // 这里很重要，使用锁来保证数据的正确写入 可以选择自旋锁或者可重复锁
         putMessageLock.lock(); //spin or ReentrantLock ,depending on store config
         try {
             MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile();
@@ -693,7 +698,7 @@ public class CommitLog {
             elapsedTimeInLock = this.defaultMessageStore.getSystemClock().now() - beginLockTimestamp;
             beginTimeInLock = 0;
         } finally {
-            putMessageLock.unlock();
+            putMessageLock.unlock();   // 释放锁
         }
 
         if (elapsedTimeInLock > 500) {
@@ -726,7 +731,7 @@ public class CommitLog {
             return putMessageResult;
         });
     }
-
+    // 异步 提交批量消息
     public CompletableFuture<PutMessageResult> asyncPutMessages(final MessageExtBatch messageExtBatch) {
         messageExtBatch.setStoreTimestamp(System.currentTimeMillis());
         AppendMessageResult result;
@@ -845,21 +850,22 @@ public class CommitLog {
 
     }
 
+    // 消息提交
     public CompletableFuture<PutMessageStatus> submitFlushRequest(AppendMessageResult result, MessageExt messageExt) {
-        // Synchronization flush
+        // Synchronization flush  同步刷盘是写入一个刷盘的请求，并且根据是否需要响应结果给发送方
         if (FlushDiskType.SYNC_FLUSH == this.defaultMessageStore.getMessageStoreConfig().getFlushDiskType()) {
             final GroupCommitService service = (GroupCommitService) this.flushCommitLogService;
             if (messageExt.isWaitStoreMsgOK()) {
                 GroupCommitRequest request = new GroupCommitRequest(result.getWroteOffset() + result.getWroteBytes(),
                         this.defaultMessageStore.getMessageStoreConfig().getSyncFlushTimeout());
                 service.putRequest(request);
-                return request.future();
+                return request.future(); // 同步等待刷盘结果
             } else {
                 service.wakeup();
-                return CompletableFuture.completedFuture(PutMessageStatus.PUT_OK);
+                return CompletableFuture.completedFuture(PutMessageStatus.PUT_OK); // 返回completeFuture
             }
         }
-        // Asynchronous flush
+        // Asynchronous flush  异步刷盘就是唤醒刷盘的线程开始工作
         else {
             if (!this.defaultMessageStore.getMessageStoreConfig().isTransientStorePoolEnable()) {
                 flushCommitLogService.wakeup();
@@ -1166,6 +1172,9 @@ public class CommitLog {
 
     /**
      * GroupCommit Service
+     *
+     * 如果不断的有putRequest的请求，那么线程的状态一直是wakeup的，就会不断的执行commit。
+     * 同时没有
      */
     class GroupCommitService extends FlushCommitLogService {
         private volatile LinkedList<GroupCommitRequest> requestsWrite = new LinkedList<GroupCommitRequest>();
@@ -1179,10 +1188,10 @@ public class CommitLog {
             } finally {
                 lock.unlock();
             }
-            this.wakeup();
+            this.wakeup(); // 每次put都是唤醒线程
         }
 
-        private void swapRequests() {
+        private void swapRequests() { // 将写请求切换到读请求去处理
             lock.lock();
             try {
                 LinkedList<GroupCommitRequest> tmp = this.requestsWrite;
@@ -1321,7 +1330,7 @@ public class CommitLog {
                 default:
                     break;
             }
-
+            // 这里实际上就是整个消息了
             ByteBuffer preEncodeBuffer = msgInner.getEncodedBuff();
             final int msgLen = preEncodeBuffer.getInt(0);
 
@@ -1356,7 +1365,7 @@ public class CommitLog {
 
 
             final long beginTimeMills = CommitLog.this.defaultMessageStore.now();
-            // Write messages to the queue buffer
+            // Write messages to the queue buffer  preEncodeBuffer就是编码后的消息体，byteBuffer就是写入开始位置的一个buffer，这里就是真正的把消息写入到commit log的uffer了
             byteBuffer.put(preEncodeBuffer);
             msgInner.setEncodedBuff(null);
             AppendMessageResult result = new AppendMessageResult(AppendMessageStatus.PUT_OK, wroteOffset, msgLen, msgIdSupplier,

@@ -181,6 +181,9 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
 
     @Override
     public void start() {
+        // 所有的handler里的任务处理都使用这个executorGroup
+        // worker的EventLoop执行时会发现对应的eventLoop不是自己，所以会给HandlerContext的eventloop提交一个任务
+        // 这个任务就是由添加handler时指定的线程池执行
         this.defaultEventExecutorGroup = new DefaultEventExecutorGroup(
             nettyServerConfig.getServerWorkerThreads(),
             new ThreadFactory() {

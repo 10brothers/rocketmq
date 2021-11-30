@@ -55,6 +55,7 @@ public class BrokerStartup {
     public static InternalLogger log;
 
     public static void main(String[] args) {
+        System.setProperty("user.home", "/Users/wangk/promotion/code/debug/rocketmq/broker");
         start(createBrokerController(args));
     }
 

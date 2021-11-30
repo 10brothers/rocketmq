@@ -65,31 +65,35 @@ import org.apache.rocketmq.store.index.QueryOffsetResult;
 import org.apache.rocketmq.store.schedule.ScheduleMessageService;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
+/**
+ * 默认消息存储，这个类中实现了写commit log和写 consume queue。其中commit log的写入，会根据是否开启了DLeger来决定使用
+ * DefaultCommitLog还是 DLegerCommitLog
+ */
 public class DefaultMessageStore implements MessageStore {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
-
+    // 消息存储相关配置
     private final MessageStoreConfig messageStoreConfig;
-    // CommitLog
+    // CommitLog 一个broker接收到的所有消息，都存在同一个commitlog，commitlog大小1G 滚动生成
     private final CommitLog commitLog;
-
+    // 一个topic在一个broker中会有多个queue，一个queue会对应一个ConsumeQueue，但是consumeQueue单个文件存30w数据，所以也会滚动生成
     private final ConcurrentMap<String/* topic */, ConcurrentMap<Integer/* queueId */, ConsumeQueue>> consumeQueueTable;
-
+    // 用来根据刷盘测试，将consumequeue的数据刷入到磁盘
     private final FlushConsumeQueueService flushConsumeQueueService;
 
     private final CleanCommitLogService cleanCommitLogService;
 
     private final CleanConsumeQueueService cleanConsumeQueueService;
-
+    // 根据key建立索引的服务
     private final IndexService indexService;
-
+    // 文件分配服务
     private final AllocateMappedFileService allocateMappedFileService;
-
+//
     private final ReputMessageService reputMessageService;
-
+// 高可用服务
     private final HAService haService;
-
+// 消息调度，主要是延迟消息。每个一个延迟level有一个queue与之对应，所以延迟level有18级，每一级是一个message queue
     private final ScheduleMessageService scheduleMessageService;
-
+// metric 统计存储数据的
     private final StoreStatsService storeStatsService;
 
     private final TransientStorePool transientStorePool;
@@ -430,7 +434,7 @@ public class DefaultMessageStore implements MessageStore {
         if (msgCheckStatus == PutMessageStatus.MESSAGE_ILLEGAL) {
             return CompletableFuture.completedFuture(new PutMessageResult(msgCheckStatus, null));
         }
-
+        // 这里调用commit log的asyncPutMessage方法
         long beginTime = this.getSystemClock().now();
         CompletableFuture<PutMessageResult> putResultFuture = this.commitLog.asyncPutMessage(msg);
 
@@ -548,7 +552,7 @@ public class DefaultMessageStore implements MessageStore {
         if (consumeQueue != null) {
             minOffset = consumeQueue.getMinOffsetInQueue();
             maxOffset = consumeQueue.getMaxOffsetInQueue();
-
+            // 读取消息的偏移，要在最大和最小之间，且不能等于最大
             if (maxOffset == 0) {
                 status = GetMessageStatus.NO_MESSAGE_IN_QUEUE;
                 nextBeginOffset = nextOffsetCorrection(offset, 0);
@@ -565,7 +569,7 @@ public class DefaultMessageStore implements MessageStore {
                 } else {
                     nextBeginOffset = nextOffsetCorrection(offset, maxOffset);
                 }
-            } else {
+            } else {  // 根据偏移量，查到对应的consume queue中对应的数据，然后拿者存储的commit log中的偏移量和消息大小，从commit log 读取消息
                 SelectMappedBufferResult bufferConsumeQueue = consumeQueue.getIndexBuffer(offset);
                 if (bufferConsumeQueue != null) {
                     try {
@@ -621,7 +625,7 @@ public class DefaultMessageStore implements MessageStore {
 
                                 continue;
                             }
-
+                            // 从commit log中读取实际的消息内容
                             SelectMappedBufferResult selectResult = this.commitLog.getMessage(offsetPy, sizePy);
                             if (null == selectResult) {
                                 if (getResult.getBufferTotalSize() == 0) {
@@ -1193,7 +1197,7 @@ public class DefaultMessageStore implements MessageStore {
 
         return null;
     }
-
+    /** 根据topic queueId 找到对应的ConsumeQueue */
     public ConsumeQueue findConsumeQueue(String topic, int queueId) {
         ConcurrentMap<Integer, ConsumeQueue> map = consumeQueueTable.get(topic);
         if (null == map) {
