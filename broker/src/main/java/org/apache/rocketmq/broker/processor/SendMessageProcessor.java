@@ -277,7 +277,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
         int queueIdInt = requestHeader.getQueueId();
         TopicConfig topicConfig = this.brokerController.getTopicConfigManager().selectTopicConfig(requestHeader.getTopic());
 
-        if (queueIdInt < 0) {
+        if (queueIdInt < 0) { // 请求中队列的id小于0，随机指定一个队列
             queueIdInt = randomQueueId(topicConfig.getWriteQueueNums());
         }
 
@@ -339,7 +339,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
             handlePutMessageResult(r, response, request, msgInner, responseHeader, sendMessageContext, ctx, queueIdInt)
         );
     }
-
+    /** 处理重试消息，如果是一个消息需要写入重试队列的话，这里会去判断重试队是否创建， */
     private boolean handleRetryAndDLQ(SendMessageRequestHeader requestHeader, RemotingCommand response,
                                       RemotingCommand request,
                                       MessageExt msg, TopicConfig topicConfig) {
@@ -360,7 +360,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
                 maxReconsumeTimes = requestHeader.getMaxReconsumeTimes();
             }
             int reconsumeTimes = requestHeader.getReconsumeTimes() == null ? 0 : requestHeader.getReconsumeTimes();
-            if (reconsumeTimes >= maxReconsumeTimes) {
+            if (reconsumeTimes >= maxReconsumeTimes) { // 超出最大重试次数，放入延迟队列里
                 newTopic = MixAll.getDLQTopic(groupName);
                 int queueIdInt = ThreadLocalRandom.current().nextInt(99999999) % DLQ_NUMS_PER_GROUP;
                 topicConfig = this.brokerController.getTopicConfigManager().createTopicInSendMessageBackMethod(newTopic,
@@ -681,7 +681,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
     private int randomQueueId(int writeQueueNums) {
         return ThreadLocalRandom.current().nextInt(99999999) % writeQueueNums;
     }
-
+    /** 构造response 发送消息的请求校验，topic信息校验，如果不存在topic信息则使用默认配置创建Topic*/
     private RemotingCommand preSend(ChannelHandlerContext ctx, RemotingCommand request,
                                     SendMessageRequestHeader requestHeader) {
         final RemotingCommand response = RemotingCommand.createResponseCommand(SendMessageResponseHeader.class);

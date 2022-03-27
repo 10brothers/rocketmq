@@ -61,16 +61,22 @@ public abstract class NettyRemotingAbstract {
 
     /**
      * Semaphore to limit maximum number of on-going one-way requests, which protects system memory footprint.
+     * 限制正在处理的one-way请求的最大数量的信号量，保护系统内存
      */
     protected final Semaphore semaphoreOneway;
 
     /**
      * Semaphore to limit maximum number of on-going asynchronous requests, which protects system memory footprint.
+     * 限制正在处理的异步请求最大数量的信号量，保护系统内存
      */
     protected final Semaphore semaphoreAsync;
 
     /**
      * This map caches all on-going requests.
+     * <p>缓存当前正在处理中的请求，会定期扫描此Map，将过期的请求给移除。在invokeSync和invokeAsync两个方法调用时写入，
+     *  缓存的Key为请求的ID opaque，每个请求都会分配一个ID。在响应到达时，会从这里拿到之前的请求，如果请求没了，就不处理了。
+     *  这个只在作为请求的一方存在
+     * </p>
      */
     protected final ConcurrentMap<Integer /* opaque */, ResponseFuture> responseTable =
         new ConcurrentHashMap<Integer, ResponseFuture>(256);
@@ -78,6 +84,9 @@ public abstract class NettyRemotingAbstract {
     /**
      * This container holds all processors per request code, aka, for each incoming request, we may look up the
      * responding processor in this map to handle the request.
+     * <p>请求的类型和处理此类请求的处理器及用于执行请求的ExecutorService映射。RequestCode可以参见 org.apache.rocketmq.common.protocol.RequestCode。
+     *   rocketmq通过这层抽象将对不同的请求类型分发到对应的处理器，且不同的处理器可以使用指定的ExecutorService（线程池），这样不同的请求处理就个隔离了
+     * </p>
      */
     protected final HashMap<Integer/* request code */, Pair<NettyRequestProcessor, ExecutorService>> processorTable =
         new HashMap<Integer, Pair<NettyRequestProcessor, ExecutorService>>(64);
@@ -145,7 +154,8 @@ public abstract class NettyRemotingAbstract {
      * <li>A response to a previous request issued by this very participant.</li>
      * </ul>
      * </p>
-     *
+     * <p> 进来的执行进来的处理入口。因为无论服务端还是客户端都会读取收到的数据然后处理，
+     * 在这个方法中并不清楚读取到的数据是请求数据还是响应数据，所以要通过指令类型来区分</p>
      * @param ctx Channel handler context.
      * @param msg incoming remoting command.
      * @throws Exception if there were any error while processing the incoming command.
@@ -190,7 +200,7 @@ public abstract class NettyRemotingAbstract {
      * @param cmd request command.
      */
     public void processRequestCommand(final ChannelHandlerContext ctx, final RemotingCommand cmd) {
-        final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode());
+        final Pair<NettyRequestProcessor, ExecutorService> matched = this.processorTable.get(cmd.getCode()); // 更具请求类型，拿到对应的处理器和线程池对
         final Pair<NettyRequestProcessor, ExecutorService> pair = null == matched ? this.defaultRequestProcessor : matched;
         final int opaque = cmd.getOpaque();
 
@@ -221,7 +231,7 @@ public abstract class NettyRemotingAbstract {
                                 }
                             }
                         };
-                        if (pair.getObject1() instanceof AsyncNettyRequestProcessor) {
+                        if (pair.getObject1() instanceof AsyncNettyRequestProcessor) { // 异步请求，使用异步请求处理器
                             AsyncNettyRequestProcessor processor = (AsyncNettyRequestProcessor)pair.getObject1();
                             processor.asyncProcessRequest(ctx, cmd, callback);
                         } else {
@@ -243,7 +253,7 @@ public abstract class NettyRemotingAbstract {
                 }
             };
 
-            if (pair.getObject1().rejectRequest()) {
+            if (pair.getObject1().rejectRequest()) { // 从处理器中判断是否要拒绝请求
                 final RemotingCommand response = RemotingCommand.createResponseCommand(RemotingSysResponseCode.SYSTEM_BUSY,
                     "[REJECTREQUEST]system busy, start flow control for a while");
                 response.setOpaque(opaque);
@@ -251,7 +261,7 @@ public abstract class NettyRemotingAbstract {
                 return;
             }
 
-            try {
+            try { // 构造一个请求任务，提交给处理器对应的线程池进行处理
                 final RequestTask requestTask = new RequestTask(run, ctx.channel(), cmd);
                 pair.getObject2().submit(requestTask);  // 任务提交到对应的线程池
             } catch (RejectedExecutionException e) {
@@ -380,6 +390,7 @@ public abstract class NettyRemotingAbstract {
      * <p>
      * This method is periodically invoked to scan and expire deprecated request.
      * </p>
+     * <p>周期性的调用去扫描和将国旗的请求失效掉
      */
     public void scanResponseTable() {
         final List<ResponseFuture> rfList = new LinkedList<ResponseFuture>();

@@ -590,7 +590,7 @@ public class CommitLog {
         keyBuilder.append(messageExt.getQueueId());
         return keyBuilder.toString();
     }
-
+    /** 异步将消息写入CommitLog中 */
     public CompletableFuture<PutMessageResult> asyncPutMessage(final MessageExtBrokerInner msg) {
         // Set the storage time
         msg.setStoreTimestamp(System.currentTimeMillis());
@@ -714,7 +714,7 @@ public class CommitLog {
         // Statistics
         storeStatsService.getSinglePutMessageTopicTimesTotal(msg.getTopic()).add(1);
         storeStatsService.getSinglePutMessageTopicSizeTotal(topic).add(result.getWroteBytes());
-
+        // 上面的操作执行成功的话，消息已经写入了OS Cache中，接着提交flush请求，以及如果消息要同步到备份的话，要处理
         CompletableFuture<PutMessageStatus> flushResultFuture = submitFlushRequest(result, msg);
         CompletableFuture<PutMessageStatus> replicaResultFuture = submitReplicaRequest(result, msg);
         return flushResultFuture.thenCombine(replicaResultFuture, (flushStatus, replicaStatus) -> {

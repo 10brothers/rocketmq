@@ -64,7 +64,7 @@ public class BrokerFastFailure {
 
     private void cleanExpiredRequest() {
         while (this.brokerController.getMessageStore().isOSPageCacheBusy()) {
-            try {
+            try {  // 如果写入commitLog时获取锁超时，则将当前请求队列中的请求直接响应了，broker busy
                 if (!this.brokerController.getSendThreadPoolQueue().isEmpty()) {
                     final Runnable runnable = this.brokerController.getSendThreadPoolQueue().poll(0, TimeUnit.SECONDS);
                     if (null == runnable) {

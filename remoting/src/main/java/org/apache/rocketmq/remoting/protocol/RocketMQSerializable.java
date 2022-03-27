@@ -144,7 +144,7 @@ public class RocketMQSerializable {
         cmd.setVersion(headerBuffer.getShort());
         // int opaque
         cmd.setOpaque(headerBuffer.getInt());
-        // int flag
+        // int flag 是作为请求的command还是作为响应的command
         cmd.setFlag(headerBuffer.getInt());
         // String remark
         int remarkLength = headerBuffer.getInt();

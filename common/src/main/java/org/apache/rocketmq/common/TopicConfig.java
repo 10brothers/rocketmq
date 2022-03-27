@@ -17,7 +17,11 @@
 package org.apache.rocketmq.common;
 
 import org.apache.rocketmq.common.constant.PermName;
-
+/**
+ * Topic的配置信息，topic名，读队列数量，写队列数量，topic过滤类型（单tag，多tag），是否顺序消息。之所以读队列数和写队列数分别设置，是为了方便扩容和缩容。
+ * 扩容时，先增加写队列数，新增的队列暂时没有消费，然后修改读队列数，消费组重新负载消费队列，这时就可以消费到新增的队列。
+ * 缩容时，先减少写队列数，缩减的队列暂时无消息写入，但是仍然在消费，等一段时间缩容的队列都消费完了，调整读队列数，消费组重新负载读队列
+ */
 public class TopicConfig {
     private static final String SEPARATOR = " ";
     public static int defaultReadQueueNums = 16;

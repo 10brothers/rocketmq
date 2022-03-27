@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import org.apache.rocketmq.common.MixAll;
-
+/** broker的信息表示，所属集群名，broker名，一起这个broker名中的brokerId和地址映射，一个Broker可以主从部署，id=0的为master，其他为follow。主从broker根据brokerName来识别*/
 public class BrokerData implements Comparable<BrokerData> {
     private String cluster;
     private String brokerName;
