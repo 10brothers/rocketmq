@@ -36,6 +36,10 @@ import org.apache.rocketmq.remoting.RPCHook;
  * Schedule service for pull consumer.
  * This Consumer will be removed in 2022, and a better implementation {@link
  * DefaultLitePullConsumer} is recommend to use in the scenario of actively pulling messages.
+ *
+ * 由于DefaultMQPullConsumer使用难度太大，于是整了这么个类，来降低使用难度。只需要实现PullTaskCallback，在回调中可以控制拉取消息，一次拉多少量，从哪里开始拉取等。
+ * 相比较与直接使用DefaultMQPullConsumer，也不用关心消费的队列变更问题，这种模式有点回到了PUSH的模式了。
+ * 而DefaultLitePullConsumer的实现，则是将消息拉取缓存下来，然后由应用程序自己控制主动获取消息并消费，同样也无需关心队列变更、消息拉取等情况。
  */
 public class MQPullConsumerScheduleService {
     private final InternalLogger log = ClientLogger.getLog();

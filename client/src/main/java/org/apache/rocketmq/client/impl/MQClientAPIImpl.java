@@ -434,25 +434,25 @@ public class MQClientAPIImpl {
     }
 
     public SendResult sendMessage(
-        final String addr,
-        final String brokerName,
-        final Message msg,
-        final SendMessageRequestHeader requestHeader,
-        final long timeoutMillis,
-        final CommunicationMode communicationMode,
-        final SendCallback sendCallback,
-        final TopicPublishInfo topicPublishInfo,
-        final MQClientInstance instance,
-        final int retryTimesWhenSendFailed,
-        final SendMessageContext context,
-        final DefaultMQProducerImpl producer
+        final String addr, // 消息要发送的目标broker地址
+        final String brokerName, // 消息发送的目标broker名
+        final Message msg, // 发送的消息
+        final SendMessageRequestHeader requestHeader, // 消息头
+        final long timeoutMillis, // 超时时间
+        final CommunicationMode communicationMode, // 通讯方式，同步 异步 单向
+        final SendCallback sendCallback, // 发送回调，异步才会有回调
+        final TopicPublishInfo topicPublishInfo, // topic对应的发布信息
+        final MQClientInstance instance, // 发送此消息的生产者共享的MQClientInstance实例
+        final int retryTimesWhenSendFailed, // 失败重试次数
+        final SendMessageContext context, // 消息发送上下文
+        final DefaultMQProducerImpl producer // 此Topic的生产者关联的DefaultMQProducerImpl实例对象
     ) throws RemotingException, MQBrokerException, InterruptedException {
         long beginStartTime = System.currentTimeMillis();
         RemotingCommand request = null;
         String msgType = msg.getProperty(MessageConst.PROPERTY_MESSAGE_TYPE);
         boolean isReply = msgType != null && msgType.equals(MixAll.REPLY_MESSAGE_FLAG);
         if (isReply) {
-            if (sendSmartMsg) {
+            if (sendSmartMsg) { // smartMsg就是更小的header头，
                 SendMessageRequestHeaderV2 requestHeaderV2 = SendMessageRequestHeaderV2.createSendMessageRequestHeaderV2(requestHeader);
                 request = RemotingCommand.createRequestCommand(RequestCode.SEND_REPLY_MESSAGE_V2, requestHeaderV2);
             } else {

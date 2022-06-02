@@ -21,6 +21,10 @@ import org.apache.rocketmq.common.message.MessageQueue;
 
 /**
  * A MessageQueueListener is implemented by the application and may be specified when a message queue changed
+ *
+ * 当消费者消费的队列变化时，用于响应这种变化。不过这个类主要是给应用程序实现的，调用处为RebalancePullImpl和RebalanceLitePullImpl
+ * 的messageQueueChanged方法。目前的实现分别为DefaultLitePullConsumerImpl和MQPullConsumerScheduledService，用于在消费队列有变更时做出不同的处理
+ *
  */
 public interface MessageQueueListener {
     /**

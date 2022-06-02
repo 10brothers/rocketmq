@@ -23,7 +23,9 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 
 /**
- * 基于CountDownLatch实现的等待与唤醒
+ * 基于CountDownLatch实现的等待与唤醒,继承了Runnable，调用start方法启动时，会默认创建一个线程，执行当前的Runnable对象。
+ * 同时重新实现了CountDownLatch，支持重置，使用它来实现等待唤醒操作，同时支持线程的停止（通过while(isStop)）的方式。
+ * 适用于需要间隔一段时间执行的任务，
  */
 public abstract class ServiceThread implements Runnable {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.COMMON_LOGGER_NAME);

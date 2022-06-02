@@ -19,15 +19,15 @@ package org.apache.rocketmq.common.protocol;
 
 public class RequestCode {
 
-    public static final int SEND_MESSAGE = 10;
+    public static final int SEND_MESSAGE = 10; // producer发送消息时的code
 
-    public static final int PULL_MESSAGE = 11;
+    public static final int PULL_MESSAGE = 11; // consumer拉取消息
 
-    public static final int QUERY_MESSAGE = 12;
+    public static final int QUERY_MESSAGE = 12; //管理控制台查询消息
     public static final int QUERY_BROKER_OFFSET = 13;
-    public static final int QUERY_CONSUMER_OFFSET = 14;
-    public static final int UPDATE_CONSUMER_OFFSET = 15;
-    public static final int UPDATE_AND_CREATE_TOPIC = 17;
+    public static final int QUERY_CONSUMER_OFFSET = 14; // 查询队列的消费偏移
+    public static final int UPDATE_CONSUMER_OFFSET = 15; // 更新消费偏移
+    public static final int UPDATE_AND_CREATE_TOPIC = 17; //
     public static final int GET_ALL_TOPIC_CONFIG = 21;
     public static final int GET_TOPIC_CONFIG_LIST = 22;
 
@@ -52,16 +52,16 @@ public class RequestCode {
 
     public static final int UNREGISTER_CLIENT = 35;
 
-    public static final int CONSUMER_SEND_MSG_BACK = 36;
+    public static final int CONSUMER_SEND_MSG_BACK = 36; // 消费端发送给broker的写入到重试队列的请求类型
 
     public static final int END_TRANSACTION = 37;
-    public static final int GET_CONSUMER_LIST_BY_GROUP = 38;
+    public static final int GET_CONSUMER_LIST_BY_GROUP = 38; //获取消费组当前在线的所有consumer ClientId
 
     public static final int CHECK_TRANSACTION_STATE = 39;
-
+    /** 如果有消费者数量变更的话，会通知到同消费组的其他订阅者，用于拉取最新的consumerId列表，然后处理queue分配*/
     public static final int NOTIFY_CONSUMER_IDS_CHANGED = 40;
 
-    public static final int LOCK_BATCH_MQ = 41;
+    public static final int LOCK_BATCH_MQ = 41;//顺序消费场景使用
 
     public static final int UNLOCK_BATCH_MQ = 42;
     public static final int GET_ALL_CONSUMER_OFFSET = 43;

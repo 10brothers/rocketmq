@@ -86,7 +86,8 @@ import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
 /**
  * 特别重的一个对象 一个MQClient实例创建一个，包含了producer和consumer，拉取消息 重平衡等等
- * 所有的网络通信也在这里
+ * 所有的网络通信也在这里。通过clientId做资源隔离和共享，同一clientId共享一个MQClientInstance
+ * 不同的clientId使用不同的MQClientInstance一以便做到资源的隔离，彼此不受影响。
  */
 public class MQClientInstance {
     private final static long LOCK_TIMEOUT_MILLIS = 3000;
@@ -103,12 +104,15 @@ public class MQClientInstance {
      * 消费组和DefaultMQPushConsumerImpl实例对象对应关系
      */
     private final ConcurrentMap<String/* group */, MQConsumerInner> consumerTable = new ConcurrentHashMap<String, MQConsumerInner>();
+    /** 命令行操作时使用，但是没有读的位置，实际的MQAdminExtInner并没有在MQClientInstance中使用*/
     private final ConcurrentMap<String/* group */, MQAdminExtInner> adminExtTable = new ConcurrentHashMap<String, MQAdminExtInner>();
     private final NettyClientConfig nettyClientConfig;
     private final MQClientAPIImpl mQClientAPIImpl;
     private final MQAdminImpl mQAdminImpl;
     /**
      * topic及其对应的路由信息，路由数据中包含多少个queue 多少个broker，broker的信息，queue和broker的关系
+     * 其中broker的信息与brokerAddrTable中保持一致，与DefaultMQProducerImpl中的topicPublishInfo中broker信息保持一致
+     * 同理，Consumer维护的broker信息也保持一致
      */
     private final ConcurrentMap<String/* Topic */, TopicRouteData> topicRouteTable = new ConcurrentHashMap<String, TopicRouteData>();
     private final Lock lockNamesrv = new ReentrantLock();
@@ -148,7 +152,7 @@ public class MQClientInstance {
         this.clientRemotingProcessor = new ClientRemotingProcessor(this);
         this.mQClientAPIImpl = new MQClientAPIImpl(this.nettyClientConfig, this.clientRemotingProcessor, rpcHook, clientConfig);
 
-        if (this.clientConfig.getNamesrvAddr() != null) {
+        if (this.clientConfig.getNamesrvAddr() != null) { // 维护所用到的namesrv列表，客户端本地维护
             this.mQClientAPIImpl.updateNameServerAddressList(this.clientConfig.getNamesrvAddr());
             log.info("user specified name server address: {}", this.clientConfig.getNamesrvAddr());
         }
@@ -160,7 +164,7 @@ public class MQClientInstance {
         this.pullMessageService = new PullMessageService(this);
         // 重平衡服务，在有新的消费实例上线下线时再分配实例消费的message queue
         this.rebalanceService = new RebalanceService(this);
-
+        // 用于向内部用的Topic发送消息用的Producer，比如事务用的HalfMessage
         this.defaultMQProducer = new DefaultMQProducer(MixAll.CLIENT_INNER_PRODUCER_GROUP);
         this.defaultMQProducer.resetClientConfig(clientConfig);
 
@@ -255,7 +259,7 @@ public class MQClientInstance {
                     this.pullMessageService.start();
                     // Start rebalance service 启动重平衡服务 每隔20s检查一次
                     this.rebalanceService.start();
-                    // Start push service 启动 producer
+                    // Start push service 启动 客户端内部用的producer组
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);
                     log.info("the client factory [{}] start OK", this.clientId);
                     this.serviceState = ServiceState.RUNNING;
@@ -284,7 +288,8 @@ public class MQClientInstance {
         }
 
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
+            // 定时更新本地topic路由信息，如果是producer，更新DefaultMQProducerImpl#topicPublishInfoTable
+            // 如果是consumer，则会更新RebalanceImpl的topicSubscribeInfoTable
             @Override
             public void run() {
                 try {
@@ -296,7 +301,7 @@ public class MQClientInstance {
         }, 10, this.clientConfig.getPollNameServerInterval(), TimeUnit.MILLISECONDS);
 
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
+            // 清理离线的broker，并给所有broker发送心跳
             @Override
             public void run() {
                 try {
@@ -309,7 +314,7 @@ public class MQClientInstance {
         }, 1000, this.clientConfig.getHeartbeatBrokerInterval(), TimeUnit.MILLISECONDS);
 
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
-
+            // 从MQClientInstance#processQueueTable中拿到MessageQueue的已提交消费进度，然后更新到对应broker
             @Override
             public void run() {
                 try {
@@ -568,7 +573,7 @@ public class MQClientInstance {
                                 if (id != MixAll.MASTER_ID)
                                     continue;
                             }
-
+                            // 发送心跳时，只往master节点发送心跳数据
                             try {
                                 int version = this.mQClientAPIImpl.sendHearbeat(addr, heartbeatData, clientConfig.getMqClientApiTimeout());
                                 if (!this.brokerVersionTable.containsKey(brokerName)) {
@@ -814,7 +819,8 @@ public class MQClientInstance {
         return !old.equals(now);
 
     }
-
+    /** 从producerTable和consumerTable，根据Topic拿到MQProducerInner或者MQConsumerInner实例，
+     * 判断是否要更新MQClientInstance中维护的topicRouteTable */
     private boolean isNeedUpdateTopicRouteInfo(final String topic) {
         boolean result = false;
         {
@@ -1070,7 +1076,7 @@ public class MQClientInstance {
         //To do need to fresh the version
         return 0;
     }
-
+    /** 获取某个topic某个消费组下所有的消费者信息*/
     public List<String> findConsumerIdList(final String topic, final String group) {
         String brokerAddr = this.findBrokerAddrByTopic(topic);
         if (null == brokerAddr) {

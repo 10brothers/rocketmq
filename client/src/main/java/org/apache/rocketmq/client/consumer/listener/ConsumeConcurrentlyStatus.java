@@ -22,7 +22,7 @@ public enum ConsumeConcurrentlyStatus {
      */
     CONSUME_SUCCESS,
     /**
-     * Failure consumption,later try to consume
+     * Failure consumption,later try to consume。
      */
     RECONSUME_LATER;
 }

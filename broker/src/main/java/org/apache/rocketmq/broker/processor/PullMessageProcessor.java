@@ -99,7 +99,7 @@ public class PullMessageProcessor extends AsyncNettyRequestProcessor implements 
         final PullMessageRequestHeader requestHeader =
             (PullMessageRequestHeader) request.decodeCommandCustomHeader(PullMessageRequestHeader.class);
 
-        response.setOpaque(request.getOpaque());
+        response.setOpaque(request.getOpaque()); // oneway不关心这个，但是async和sync都需要靠这个来找到对应的RequestFuture去处理
 
         log.debug("receive PullMessage request command, {}", request);
 

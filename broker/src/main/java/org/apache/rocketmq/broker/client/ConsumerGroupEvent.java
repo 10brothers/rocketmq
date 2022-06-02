@@ -19,7 +19,7 @@ package org.apache.rocketmq.broker.client;
 public enum ConsumerGroupEvent {
 
     /**
-     * Some consumers in the group are changed.
+     * Some consumers in the group are changed.  同一个group中的消费者发生变化时，要通知
      */
     CHANGE,
     /**

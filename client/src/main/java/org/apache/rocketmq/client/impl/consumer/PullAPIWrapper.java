@@ -80,7 +80,7 @@ public class PullAPIWrapper {
             if (!subscriptionData.getTagsSet().isEmpty() && !subscriptionData.isClassFilterMode()) {
                 msgListFilterAgain = new ArrayList<MessageExt>(msgList.size());
                 for (MessageExt msg : msgList) {
-                    if (msg.getTags() != null) {
+                    if (msg.getTags() != null) { // 过滤掉不需要订阅的tag消息
                         if (subscriptionData.getTagsSet().contains(msg.getTags())) {
                             msgListFilterAgain.add(msg);
                         }

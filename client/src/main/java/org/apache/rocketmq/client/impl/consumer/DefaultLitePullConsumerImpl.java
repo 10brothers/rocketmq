@@ -121,10 +121,10 @@ public class DefaultLitePullConsumerImpl implements MQConsumerInner {
     private static final long PULL_TIME_DELAY_MILLS_ON_EXCEPTION = 3 * 1000;
 
     private DefaultLitePullConsumer defaultLitePullConsumer;
-
+    /** 当前消费者所消费的所有队列，以及每个消费的队列对应一个PullTask */
     private final ConcurrentMap<MessageQueue, PullTaskImpl> taskTable =
         new ConcurrentHashMap<MessageQueue, PullTaskImpl>();
-
+    /** 当前消费者所消费的队列以及队列的消费情况 */
     private AssignedMessageQueue assignedMessageQueue = new AssignedMessageQueue();
 
     private final BlockingQueue<ConsumeRequest> consumeRequestCache = new LinkedBlockingQueue<ConsumeRequest>();
@@ -230,6 +230,9 @@ public class DefaultLitePullConsumerImpl implements MQConsumerInner {
         startPullTask(mqNewSet);
     }
 
+    /**
+     * 在消费队列变化时，要更新PullTask，不再消费的队列，对应的PullTask要停止，然后新增的待消费队列，要创建一个PullTask去不断的拉取消息，写入到缓存中
+     */
     class MessageQueueListenerImpl implements MessageQueueListener {
         @Override
         public void messageQueueChanged(String topic, Set<MessageQueue> mqAll, Set<MessageQueue> mqDivided) {

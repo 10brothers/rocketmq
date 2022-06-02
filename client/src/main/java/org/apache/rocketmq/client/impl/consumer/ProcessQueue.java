@@ -48,11 +48,12 @@ public class ProcessQueue {
     private final InternalLogger log = ClientLogger.getLog();
     private final ReadWriteLock treeMapLock = new ReentrantReadWriteLock();
     /**
-     * 消息偏移量与实际的消息对象映射关系
+     * 消息偏移量与实际的消息对象映射关系。同时这里也是存放待处理的消息，按照偏移量的大小进行排序。消费也是从小到大。
+     * TreeMap是红黑树的实现
      */
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
-    private final AtomicLong msgCount = new AtomicLong(); // 已处理消息数量
-    private final AtomicLong msgSize = new AtomicLong(); // 当前所对应的处理队列实际已处理消息总大小 非消息个数
+    private final AtomicLong msgCount = new AtomicLong(); // 已经拉取到了客户端，但是还未被处理的消息数量
+    private final AtomicLong msgSize = new AtomicLong(); // 当前所对应的处理队列实际待处理消息总大小
     private final Lock consumeLock = new ReentrantLock();
     /**
      * A subset of msgTreeMap, will only be used when orderly consume
@@ -63,7 +64,7 @@ public class ProcessQueue {
     private volatile boolean dropped = false;
     private volatile long lastPullTimestamp = System.currentTimeMillis();
     private volatile long lastConsumeTimestamp = System.currentTimeMillis();
-    private volatile boolean locked = false;
+    private volatile boolean locked = false; // ProcessQueue的锁状态，有新的队列要消费时锁住
     private volatile long lastLockTimestamp = System.currentTimeMillis();
     private volatile boolean consuming = false;
     private volatile long msgAccCnt = 0;
@@ -170,7 +171,7 @@ public class ProcessQueue {
 
         return dispatchToConsume;
     }
-
+    // 最大消息偏移量和最小消息偏移量之间的差值
     public long getMaxSpan() {
         try {
             this.treeMapLock.readLock().lockInterruptibly();

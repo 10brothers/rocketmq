@@ -48,6 +48,8 @@ public class NamesrvStartup {
     private static CommandLine commandLine = null;
 
     public static void main(String[] args) {
+        // for debug purpose
+        System.setProperty("user.home", "/Users/wangk/promotion/code/debug/rocketmq/broker");
         main0(args);
     }
 

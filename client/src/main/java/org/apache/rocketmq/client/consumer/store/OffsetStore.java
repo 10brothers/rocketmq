@@ -25,6 +25,7 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 
 /**
  * Offset store interface
+ * 消费者存储和获取消费进度的接口，一般默认广播消费模式是消费者自己维护在本地，而集群消费模式，消费进度维护在broker端
  */
 public interface OffsetStore {
     /**

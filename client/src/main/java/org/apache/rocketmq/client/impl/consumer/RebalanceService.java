@@ -22,12 +22,13 @@ import org.apache.rocketmq.common.ServiceThread;
 import org.apache.rocketmq.logging.InternalLogger;
 
 /**
- * 再平衡服务，默认每隔20s检查一次
+ * 再平衡服务，默认每隔20s执行一次，从nameserver查询最新的订阅信息（当前topic的当前消费组有多少号消费者订阅上来）。
+ * 根据消费者的水量变化，来重新分配需要订阅的队列。
  */
 public class RebalanceService extends ServiceThread {
     private static long waitInterval =
         Long.parseLong(System.getProperty(
-            "rocketmq.client.rebalance.waitInterval", "20000"));
+            "rocketmq.client.rebalance.waitInterval", "40000"));
     private final InternalLogger log = ClientLogger.getLog();
     private final MQClientInstance mqClientFactory;
 

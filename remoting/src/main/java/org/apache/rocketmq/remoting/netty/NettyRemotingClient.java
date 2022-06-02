@@ -396,10 +396,10 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
     }
 
     private Channel getAndCreateChannel(final String addr) throws RemotingConnectException, InterruptedException {
-        if (null == addr) {
+        if (null == addr) { //如果这里没有指明发送的目的地址，认为获取到NameServer的Channel
             return getAndCreateNameserverChannel();
         }
-
+        // 先尝试从Channel缓存获取
         ChannelWrapper cw = this.channelTables.get(addr);
         if (cw != null && cw.isOK()) {
             return cw.getChannel();

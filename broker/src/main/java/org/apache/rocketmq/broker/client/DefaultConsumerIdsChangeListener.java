@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.rocketmq.broker.BrokerController;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
-
+/** 在ConsumerId列表变化时做出处理，很重要的一点是在有新的消费者加入或者旧的消费者退出来时，通知其他的消费者重新分配消费队列*/
 public class DefaultConsumerIdsChangeListener implements ConsumerIdsChangeListener {
     private final BrokerController brokerController;
 
@@ -37,7 +37,7 @@ public class DefaultConsumerIdsChangeListener implements ConsumerIdsChangeListen
             return;
         }
         switch (event) {
-            case CHANGE:
+            case CHANGE: //
                 if (args == null || args.length < 1) {
                     return;
                 }

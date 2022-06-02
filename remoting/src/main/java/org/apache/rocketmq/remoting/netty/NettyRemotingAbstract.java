@@ -390,7 +390,7 @@ public abstract class NettyRemotingAbstract {
      * <p>
      * This method is periodically invoked to scan and expire deprecated request.
      * </p>
-     * <p>周期性的调用去扫描和将国旗的请求失效掉
+     * <p>周期性的调用去扫描和将过期的请求失效掉
      */
     public void scanResponseTable() {
         final List<ResponseFuture> rfList = new LinkedList<ResponseFuture>();

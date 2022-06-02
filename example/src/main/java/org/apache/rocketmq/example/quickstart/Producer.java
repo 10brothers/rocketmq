@@ -22,6 +22,9 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.remoting.common.RemotingHelper;
 
+import java.sql.Time;
+import java.util.concurrent.TimeUnit;
+
 /**
  * This class demonstrates how to send messages to brokers using provided {@link DefaultMQProducer}.
  */
@@ -31,7 +34,7 @@ public class Producer {
         /*
          * Instantiate with a producer group name.
          */
-        DefaultMQProducer producer = new DefaultMQProducer("please_rename_unique_group_name");
+        DefaultMQProducer producer = new DefaultMQProducer("defaultProducer");
 
         /*
          * Specify name server addresses.
@@ -49,8 +52,8 @@ public class Producer {
          * Launch the instance.
          */
         producer.start();
-
-        for (int i = 0; i < 1; i++) {
+        TimeUnit.SECONDS.sleep(6);
+        for (int i = 0; i < 100000; i++) {
             try {
 
                 /*
@@ -58,13 +61,14 @@ public class Producer {
                  */
                 Message msg = new Message("TopicTest" /* Topic */,
                     "TagA" /* Tag */,
-                    ("Hello RocketMQ " + i).getBytes(RemotingHelper.DEFAULT_CHARSET) /* Message body */
+                    ("Hello RocketMQ -- " + i).getBytes(RemotingHelper.DEFAULT_CHARSET) /* Message body */
                 );
 
                 /*
                  * Call send message to deliver message to one of brokers.
                  */
                 SendResult sendResult = producer.send(msg);
+                TimeUnit.MILLISECONDS.sleep(10);
                 /*
                  * There are different ways to send message, if you don't care about the send result,you can use this way
                  * {@code

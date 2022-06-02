@@ -38,6 +38,7 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 
 /**
  * Remote storage implementation
+ * 集群消费模式，由broker维护消费进度
  */
 public class RemoteBrokerOffsetStore implements OffsetStore {
     private final static InternalLogger log = ClientLogger.getLog();
@@ -110,7 +111,7 @@ public class RemoteBrokerOffsetStore implements OffsetStore {
 
         return -1;
     }
-
+    /** 更新消费进度到broker */
     @Override
     public void persistAll(Set<MessageQueue> mqs) {
         if (null == mqs || mqs.isEmpty())
