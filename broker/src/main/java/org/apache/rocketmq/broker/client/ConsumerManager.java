@@ -34,8 +34,8 @@ import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
 
 /**
- * 消费者管理器。其实应该叫ConsumerGroupManager比较合适
- * 记录当前broker所有订阅的消费组信息，每个消费组订阅了哪些topic，订阅的信息
+ * 消费者客户端管理器。消费者组和组内所有的消费者信息，在组内有消费者下线或者上线时，会通知所有有效的consumer
+ * @see ConsumerGroupInfo
  */
 public class ConsumerManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);

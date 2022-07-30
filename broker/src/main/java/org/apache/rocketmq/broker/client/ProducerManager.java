@@ -31,7 +31,7 @@ import org.apache.rocketmq.remoting.common.RemotingHelper;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
 
 /**
- * 消费组管理器，也应该叫ProducerGroupManager合适些
+ * 生产者客户端管理
  */
 public class ProducerManager {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
