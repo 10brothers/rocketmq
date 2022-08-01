@@ -76,7 +76,7 @@ public class TransientStorePool {
     }
 
     public ByteBuffer borrowBuffer() {
-        ByteBuffer buffer = availableBuffers.pollFirst();
+            ByteBuffer buffer = availableBuffers.pollFirst();
         if (availableBuffers.size() < poolSize * 0.4) {
             log.warn("TransientStorePool only remain {} sheets.", availableBuffers.size());
         }

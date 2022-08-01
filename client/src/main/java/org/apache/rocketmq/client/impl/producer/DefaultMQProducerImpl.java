@@ -718,7 +718,7 @@ public class DefaultMQProducerImpl implements MQProducerInner {
             return topicPublishInfo;
         }
     }
-
+    /** 根据properties属性，来判断消息的类型，事务类型的消息和延迟消息，会发送到内部系统Topic中 */
     private SendResult sendKernelImpl(final Message msg,
         final MessageQueue mq,
         final CommunicationMode communicationMode,

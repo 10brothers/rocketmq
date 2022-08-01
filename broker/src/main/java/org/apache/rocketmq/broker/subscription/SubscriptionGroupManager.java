@@ -32,7 +32,7 @@ import org.apache.rocketmq.common.subscription.SubscriptionGroupConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 
 /**
- * 订阅组管理器，其实就是消费组。使用消费组名映射消费组配置信息。消费组中可以配置集群消费 还是广播消费，以及重试队列的大小。
+ * 订阅组管理器，消费组在订阅某个topic时的订阅信息。使用消费组名映射消费组配置信息。消费组中可以配置集群消费 还是广播消费，以及重试队列的大小。
  *
  * 订阅组管理器创建时，会初始化一些内部的订阅组。有一些内部的topic需要rocketmq自己去订阅消费
  *

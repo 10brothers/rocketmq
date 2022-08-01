@@ -51,7 +51,8 @@ import org.apache.rocketmq.store.schedule.ScheduleMessageService;
 
 /**
  * Store all metadata downtime for recovery, data protection reliability
- * commitlog文件存储的抽象。真正去管理commitlog的写入 读取 刷盘
+ * 基于提交日志来实现消息的存储，顺序写入消息日志，然后再写索引和消费队列。依赖MappedFileQueue来维护文件，
+ * 从MappedFileQueue中获取到对应的MappedFile然后操作读写。
  */
 public class CommitLog {
     // Message's MAGIC CODE daa320a7

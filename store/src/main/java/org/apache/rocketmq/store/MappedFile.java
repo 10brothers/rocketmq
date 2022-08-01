@@ -91,7 +91,7 @@ public class MappedFile extends ReferenceResource {
             }
         }
     }
-
+    /** 通过反射拿到DirectByteBuffer的Cleaner对象实例，调用clean方法释放堆外内存 */
     public static void clean(final ByteBuffer buffer) {
         if (buffer == null || !buffer.isDirect() || buffer.capacity() == 0)
             return;

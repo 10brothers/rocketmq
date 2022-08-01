@@ -29,7 +29,7 @@ import org.apache.rocketmq.store.stats.BrokerStatsManager;
 /**
  * This class defines contracting interfaces to implement, allowing third-party vendor to use customized message store.
  *
- * 消费存储。目前rocketmq自己实现的是{@link DefaultMessageStore}。它直接决定如何处理存储消息
+ * 消息存储的抽象。目前rocketmq自己实现的是{@link DefaultMessageStore}，依赖CommitLog去读写消息
  */
 public interface MessageStore {
 

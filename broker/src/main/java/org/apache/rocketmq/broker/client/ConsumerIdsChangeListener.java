@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 package org.apache.rocketmq.broker.client;
-
+/** 同一个消费组的消费者有变更时的事件监听器，负责通知消费组的其他消费者进行消费队列的再平衡 */
 public interface ConsumerIdsChangeListener {
 
     void handle(ConsumerGroupEvent event, String group, Object... args);

@@ -31,7 +31,8 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 
 /**
- *  一个commit log每个大小1G，所以会有多个文件，此类就是用于逻辑上抽象出来的一个完整的commit log文件
+ *  映射文件的抽象，提交日志有多个，固定大小，写满后需要不断提前创建，处理提交的偏移，刷新的偏移信息，获取最新的偏移等等。
+ *  还会处理过期的文件，根据偏移量返回对应的MappedFile等等，而具体的读写操作则是发生在CommitLog中
  */
 public class MappedFileQueue {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);

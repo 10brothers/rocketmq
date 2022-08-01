@@ -50,7 +50,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
-
+/**
+ * broker需要通过NettyServer来向客户端发送消息，主要是事务回调，消费组中消费者数量变更通知，重置消费偏移量等等这类。
+ * 因为客户端跟broker连接使用的RemotingServer，所以broker主动请求客户端时也得用同一个NettyServer实例
+ */
 public class Broker2Client {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
     private final BrokerController brokerController;
