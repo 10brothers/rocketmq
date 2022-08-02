@@ -324,7 +324,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                     switch (pullResult.getPullStatus()) {
                         case FOUND: // 消息拉到了
                             long prevRequestOffset = pullRequest.getNextOffset();
-                            pullRequest.setNextOffset(pullResult.getNextBeginOffset()); //设置下次拉取的围追
+                            pullRequest.setNextOffset(pullResult.getNextBeginOffset()); //设置下次拉取的偏移量开始值
                             long pullRT = System.currentTimeMillis() - beginTimestamp;
                             DefaultMQPushConsumerImpl.this.getConsumerStatsManager().incPullRT(pullRequest.getConsumerGroup(),
                                 pullRequest.getMessageQueue().getTopic(), pullRT);

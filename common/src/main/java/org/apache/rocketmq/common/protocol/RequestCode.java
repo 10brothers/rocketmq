@@ -186,7 +186,7 @@ public class RequestCode {
      * resume logic of checking half messages that have been put in TRANS_CHECK_MAXTIME_TOPIC before
      */
     public static final int RESUME_CHECK_HALF_MESSAGE = 323;
-
+    /** 消费者在消费消息后，响应消费结果，这个消费结果最终会通过broker，由broker将结果回复给producer */
     public static final int SEND_REPLY_MESSAGE = 324;
 
     public static final int SEND_REPLY_MESSAGE_V2 = 325;

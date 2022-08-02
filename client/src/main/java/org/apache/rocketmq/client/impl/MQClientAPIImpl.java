@@ -1090,7 +1090,10 @@ public class MQClientAPIImpl {
         RemotingCommand response = this.remotingClient.invokeSync(addr, request, timeoutMillis);
         return response.getCode() == ResponseCode.SUCCESS;
     }
-
+    /** 告诉broker哪一条消息需要重试消费，仅需要告诉broker哪个消费组，
+     * 哪个topic，在提交日志中的偏移量，重试消费策略，重试次数 消息id这几个信息。
+     * 这里没有构造重试Topic，由broker自己决定
+     */
     public void consumerSendMessageBack(
         final String addr,
         final MessageExt msg,

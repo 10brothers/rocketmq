@@ -585,7 +585,7 @@ public class DefaultMQPullConsumerImpl implements MQConsumerInner {
                 this.defaultMQPullConsumer.getMaxReconsumeTimes());
         } catch (Exception e) {
             log.error("sendMessageBack Exception, " + this.defaultMQPullConsumer.getConsumerGroup(), e);
-
+            // 如果发送异常了，直接通过Producer发消息的方式 尝试发送一条重试消息到重试队列
             Message newMsg = new Message(MixAll.getRetryTopic(this.defaultMQPullConsumer.getConsumerGroup()), msg.getBody());
             String originMsgId = MessageAccessor.getOriginMessageId(msg);
             MessageAccessor.setOriginMessageId(newMsg, UtilAll.isBlank(originMsgId) ? msg.getMsgId() : originMsgId);

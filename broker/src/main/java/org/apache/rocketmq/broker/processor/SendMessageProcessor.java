@@ -111,7 +111,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
         return this.brokerController.getMessageStore().isOSPageCacheBusy() ||
             this.brokerController.getMessageStore().isTransientStorePoolDeficient();
     }
-
+    /** 处理消费失败时，通知broker处理将消息写入重试队列，超出最大重试次数的，写入DLQ（死信队列）队列 */
     private CompletableFuture<RemotingCommand> asyncConsumerSendMsgBack(ChannelHandlerContext ctx,
                                                                         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);
@@ -170,7 +170,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
             response.setRemark("look message by offset failed, " + requestHeader.getOffset());
             return CompletableFuture.completedFuture(response);
         }
-
+        // 在存入重试队列的消息属性中保存原始的topic信息
         final String retryTopic = msgExt.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
         if (null == retryTopic) {
             MessageAccessor.putProperty(msgExt, MessageConst.PROPERTY_RETRY_TOPIC, msgExt.getTopic());
@@ -186,7 +186,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
                 maxReconsumeTimes = times;
             }
         }
-
+        // 重试次数超出阈值或者重试策略是直接进入DLQ队列
         if (msgExt.getReconsumeTimes() >= maxReconsumeTimes
             || delayLevel < 0) {
             newTopic = MixAll.getDLQTopic(requestHeader.getGroup());
@@ -339,7 +339,7 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor implement
             handlePutMessageResult(r, response, request, msgInner, responseHeader, sendMessageContext, ctx, queueIdInt)
         );
     }
-    /** 处理重试消息，如果是一个消息需要写入重试队列的话，这里会去判断重试队是否创建， */
+    /** 处理重试消息，如果重试次数超出了最大可重试次数，则会修改消息的topic，将消息发送到DLQ主题中 */
     private boolean handleRetryAndDLQ(SendMessageRequestHeader requestHeader, RemotingCommand response,
                                       RemotingCommand request,
                                       MessageExt msg, TopicConfig topicConfig) {

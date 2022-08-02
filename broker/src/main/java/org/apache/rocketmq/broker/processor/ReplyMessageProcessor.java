@@ -46,7 +46,7 @@ import org.apache.rocketmq.store.PutMessageResult;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 
 import java.util.concurrent.ThreadLocalRandom;
-
+/** 一般是消费者在消费消息后，经由broker回复给producer的请求处理，broker收到回复消息后，推送给producer */
 public class ReplyMessageProcessor extends AbstractSendMessageProcessor implements NettyRequestProcessor {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.BROKER_LOGGER_NAME);
 

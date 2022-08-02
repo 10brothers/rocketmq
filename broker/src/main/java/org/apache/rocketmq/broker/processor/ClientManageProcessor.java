@@ -92,7 +92,7 @@ public class ClientManageProcessor extends AsyncNettyRequestProcessor implements
                 int topicSysFlag = 0;
                 if (data.isUnitMode()) {
                     topicSysFlag = TopicSysFlag.buildSysFlag(false, true);
-                }
+                } // 尝试创建一个对应的重试topic
                 String newTopic = MixAll.getRetryTopic(data.getGroupName());
                 this.brokerController.getTopicConfigManager().createTopicInSendMessageBackMethod(
                     newTopic,
